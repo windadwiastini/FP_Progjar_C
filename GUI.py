@@ -43,8 +43,10 @@ class GUI:
         self.loading=False
         self.username=""
         self.turn = True
-        self.score = [0,0]
+        self.score1 = 0
+        self.score2 = 0
         self.jumlahPasangTebak=0
+        self.i=0
 
         # self.client = client
 
@@ -67,39 +69,53 @@ class GUI:
                     pygame.draw.rect(self.gameDisplay, self.red, [tileSizeI, tileSizeJ, self.blockSize, self.blockSize],self.borderSize)
                 temp = (tileSizeI, tileSizeJ)
                 self.arrayPasang.append(temp)
+                # print self.arrayPasang
+                index+=1
 
     def arenaPilih(self):
+        index=0
         for i in range(4):
             tileSizeI = i * self.blockSize
             for j in range(4):
                 tileSizeJ = j * self.blockSize
-                pygame.draw.rect(self.gameDisplay, self.red, [tileSizeI, tileSizeJ, self.blockSize, self.blockSize], self.borderSize)
+                if self.arrayDataPasang[index] == 1:
+                    pygame.draw.rect(self.gameDisplay, self.black,[tileSizeI + self.borderSize, tileSizeJ + self.borderSize, self.kotakIsi,self.kotakIsi])
+                else:
+                    pygame.draw.rect(self.gameDisplay, self.red, [tileSizeI, tileSizeJ, self.blockSize, self.blockSize], self.borderSize)
                 temp = (tileSizeI, tileSizeJ)
                 self.arrayPilih.append(temp)
-
+                index+=1
     def button(self,x,y,key):
         cur = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
-        if self.jumlahPasangTebak<=4:
-            if x+self.blockSize > cur[0] > x and y+self.blockSize > cur[1] > y:
-                # pygame.draw.rect(self.gameDisplay,self.black,(x+self.borderSize,y+self.borderSize,self.kotakIsi,self.kotakIsi))
-                if click[0] == 1:
-                    self.clicked(x, y, key)
-                    self.jumlahPasangTebak+=1
-        else :
-            if self.turn:
-                self.turn=False
-            else:
-                self.turn=True
+        if x+self.blockSize > cur[0] > x and y+self.blockSize > cur[1] > y:
+            # pygame.draw.rect(self.gameDisplay,self.black,(x+self.borderSize,y+self.borderSize,self.kotakIsi,self.kotakIsi))
+            if click[0] == 1:
+                self.clicked(x, y, key)
+                print
+
+
+        # else :
+        #     if self.turn:
+        #         self.turn=False
+        #     else:
+        #         self.turn=True
 
     def clicked(self,x,y,key):
-        if self.turn:
-            self.arrayDataPilih = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            self.arrayDataPasang[key]=1
-            print self.arrayDataPasang
+        if self.arrayDataPasang[key]==0:
+            if self.turn:
+                self.arrayDataPilih = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                self.arrayDataPasang[key]=1
+                print self.arrayDataPasang
+                # pygame.draw.rect(self.gameDisplay, self.black,(x + self.borderSize, y + self.borderSize, self.kotakIsi, self.kotakIsi))
+                self.jumlahPasangTebak += 1
+            else :
+                self.arrayDataPilih[key]=1
+                # pygame.draw.rect(self.gameDisplay, self.black,(x + self.borderSize, y + self.borderSize, self.kotakIsi, self.kotakIsi))
         else :
-            self.arrayDataPilih[key]=1
-        pygame.draw.rect(self.gameDisplay, self.black,(x + self.borderSize, y + self.borderSize, self.kotakIsi, self.kotakIsi))
+            pass
+
+
 
     def insertText(self,text,color,size):
         if size=="small":
@@ -113,6 +129,11 @@ class GUI:
     def showText(self,isi,color,posisiY,size="small"):
         textSurf,textRect = self.insertText(isi,color,size)
         textRect.center = (self.displayWidth/2),(posisiY)
+        self.gameDisplay.blit(textSurf,textRect)
+
+    def showScore(self,isi,color,posisiX,size="small"):
+        textSurf , textRect = self.insertText(isi,color,size)
+        textRect.center = (posisiX),650
         self.gameDisplay.blit(textSurf,textRect)
 
     def scoreBoard(self):
@@ -145,19 +166,11 @@ class GUI:
                     return "LISTR"
                 elif action=="waitingRoom":
                     self.makeRoom = False
-                    # if any(self.namaRoom in nama for nama in self.lisNamaRoom):
-                    #     self.error_nama_room()
-                    #
-                    # else:
-                    #     self.makeRoom=False
-						# self.waiting_room()
                 elif action=="readyToPlay":
                     self.findRoom = False
                     return "JOINR "+param
-                    #self.connect_room()
                 elif action=="intro":
                     self.firstRoom=False
-                    # self.game_intro()
 
         else :
             pygame.draw.rect(self.gameDisplay, colorinActive, (x, y, menuWidth, menuHeight))
@@ -289,7 +302,7 @@ class GUI:
                     quit()
             time.sleep(5)
             self.connectRoom=False
-        self.gameLoop()
+        return
 
     def loadingScreen(self):
         self.loading=True
@@ -315,7 +328,11 @@ class GUI:
                     quit()
             self.loading = False
 
-    def gameLoop(self):
+    def gameLoop(self,skor1,skor2,ladang,myTurn):
+        self.score1=skor1
+        self.score2=skor2
+        self.arrayPasangData = ladang
+        self.turn = myTurn
         gameExit = False
         gameOver = False
         self.gameDisplay.fill(self.white)
@@ -323,9 +340,12 @@ class GUI:
         self.jumlahPasangTebak=0
         pygame.display.update()
 
+
         while not gameExit:
 
-            self.showText("Score: " + str(self.score[0]), self.red, 625)
+            self.showScore("Score: " + str(self.score1), self.lgreen, 150)
+            self.showScore("Score: " + str(self.score2), self.lred, 450)
+
             while gameOver==True:
                 self.youWin()
 
@@ -335,33 +355,35 @@ class GUI:
             if self.turn:
                 self.arenaPasang()
                 self.showText("Memasang Ranjau",self.red,675)
-                if self.jumlahPasangTebak>4:
+                if self.jumlahPasangTebak>=4:
                     return self.arrayDataPasang
+
             else :
                 self.arenaPilih()
                 self.showText("Memilih Lubang",self.green,675)
-                if self.jumlahPasangTebak>4:
+                if self.jumlahPasangTebak>=4:
                     return self.arrayDataPilih
+
 
             koor_x = [seq[0] for seq in self.arrayPasang]
             koor_y = [seq[1] for seq in self.arrayPasang]
 
-            self.button(koor_x[0], koor_y[0],0)
-            self.button(koor_x[1], koor_y[1],1)
-            self.button(koor_x[2], koor_y[2],2)
-            self.button(koor_x[3], koor_y[3],3)
-            self.button(koor_x[4], koor_y[4],4)
-            self.button(koor_x[5], koor_y[5],5)
-            self.button(koor_x[6], koor_y[6],6)
-            self.button(koor_x[7], koor_y[7],7)
-            self.button(koor_x[8], koor_y[8],8)
-            self.button(koor_x[9], koor_y[9],9)
-            self.button(koor_x[10], koor_y[10],10)
-            self.button(koor_x[11], koor_y[11],11)
-            self.button(koor_x[12], koor_y[12],12)
-            self.button(koor_x[13], koor_y[13],13)
-            self.button(koor_x[14], koor_y[14],14)
-            self.button(koor_x[15], koor_y[15],15)
+            self.button(koor_x[0], koor_y[0], 0)
+            self.button(koor_x[1], koor_y[1], 1)
+            self.button(koor_x[2], koor_y[2], 2)
+            self.button(koor_x[3], koor_y[3], 3)
+            self.button(koor_x[4], koor_y[4], 4)
+            self.button(koor_x[5], koor_y[5], 5)
+            self.button(koor_x[6], koor_y[6], 6)
+            self.button(koor_x[7], koor_y[7], 7)
+            self.button(koor_x[8], koor_y[8], 8)
+            self.button(koor_x[9], koor_y[9], 9)
+            self.button(koor_x[10], koor_y[10], 10)
+            self.button(koor_x[11], koor_y[11], 11)
+            self.button(koor_x[12], koor_y[12], 12)
+            self.button(koor_x[13], koor_y[13], 13)
+            self.button(koor_x[14], koor_y[14], 14)
+            self.button(koor_x[15], koor_y[15], 15)
 
             pygame.display.update()
         pygame.quit()
@@ -379,4 +401,4 @@ class GUI:
 
 
 ingame = GUI()
-ingame.gameLoop()
+ingame.gameLoop(1,2,3,True)
