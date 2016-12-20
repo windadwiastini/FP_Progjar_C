@@ -12,7 +12,6 @@ class ServerOpen(LineReceiver):
         self.threads = []
         self.lawan = None
         self.role = None
-        self.game = None
 
     def connectionMade(self):
         print "Client masuk"
@@ -49,7 +48,6 @@ class ServerOpen(LineReceiver):
             self.state = "PLAY"
             self.role == "RAJA"
             self.lawan = self.newRoom.getPenantang()
-            self.game = self.newRoom.startGame()
             self.sendLine("GAME_START")
         else:
             self.sendLine("WAITING")
@@ -96,7 +94,6 @@ class ServerOpen(LineReceiver):
                 self.lawan = self.newRoom.getRoomMaster()
                 self.state = "PLAY"
                 self.role = "PENANTANG"
-                self.game = self.newRoom.startGame()
                 self.sendLine("GAME_START")
             else:
                 pesan = "\nTidak ada room dengan nama "+content+"\n"+self.main_menu()
@@ -104,63 +101,72 @@ class ServerOpen(LineReceiver):
 
     def pasangRanjau(self):
         if self.role == "RAJA":
-            ladang = self.game.getLadang(1)
+            ladang = self.newRoom.getLadang(1)
             paket_ladang = json.dumps(ladang)
         else:
-            ladang = self.game.getLadang(2)
+            ladang = self.newRoom.getLadang(2)
             paket_ladang = json.dumps(ladang)
         return "PASANG // "+paket_ladang
 
     def tebakRanjau(self):
         if self.role == "RAJA":
-            ladang = self.game.getLadang(2)
+            ladang = self.newRoom.getLadang(2)
             paket_ladang = json.dumps(ladang)
         else:
-            ladang = self.game.getLadang(1)
+            ladang = self.newRoom.getLadang(1)
             paket_ladang = json.dumps(ladang)
         return "TEBAK // " + paket_ladang
 
     def handle_PLAY(self, line):
-        pesan = str(self.game.getSkor(1))+" vs "+str(self.game.getSkor(1))+" // "
+        pesan = str(self.newRoom.getSkor(1))+" vs "+str(self.newRoom.getSkor(1))+" // "
         if "IM_READY" in line:
-            self.game.cleanLadang()
+            self.newRoom.cleanLadang()
             pesan = pesan+self.pasangRanjau()
             print pesan
         elif "APAKAH_PLAYER_LAIN_SIAP" in line:
-            if self.newRoom.cekKesiapanRanjau() is False:
-                self.sendLine("MUSUH_BELUM_SIAP")
+            if not self.newRoom.cekKesiapanRanjau():
+                pesan = "MUSUH_BELUM_SIAP"
+                self.sendLine(pesan)
+                print "SERVER: ", pesan
                 return
             else:
                 pesan = pesan+self.tebakRanjau()
+                print "SERVER: ", pesan
         elif "APAKAH_PLAYER_LAIN_SELESAI" in line:
-            if self.newRoom.cekKesiapanAkhir() == False:
+            if not self.newRoom.cekKesiapanAkhir():
                 self.sendLine("MUSUH_BELUM_SELESAI")
             else:
-                self.game.updateSkor()
-                pesan = str(self.game.getSkor(1)) + " vs " + str(self.game.getSkor(1)) + " // "
+                self.newRoom.updateSkor()
+                pesan = str(self.newRoom.getSkor(1)) + " vs " + str(self.newRoom.getSkor(1)) + " // "
                 pesan = pesan + self.pasangRanjau()
+                if self.newRoom.cekGameOver is True:
+                    self.sendLine(pesan + " GAME_OVER")
+                    return
         elif "RANJAUKU" in line:
             ladang = line.split(" // ")[1]
             if self.role == "RAJA":
-                self.game.setLadang(1, ladang)
-                self.game.set_ranjau_siap(1, True)
-                self.game.set_kesiapan_akhir(1, False)
+                self.newRoom.setLadang(1, ladang)
+                self.newRoom.set_ranjau_siap(1, True)
+                self.newRoom.set_kesiapan_akhir(1, False)
             else:
-                self.game.setLadang(2, ladang)
-                self.game.set_ranjau_siap(2, True)
-                self.game.set_kesiapan_akhir(2, False)
+                self.newRoom.setLadang(2, ladang)
+                self.newRoom.set_ranjau_siap(2, True)
+                self.newRoom.set_kesiapan_akhir(2, False)
             self.sendLine("RANJAU_TERPASANG")
             return
         elif "TEBAKANKU" in line:
-            tebakan = line.split(" // ")[1]
+            self.newRoom.setUpdateSkorFlag(False)
+            print line
+            tebakan_paket = line.split(" // ")[1]
+            tebakan = json.loads(tebakan_paket)
             if self.role == "RAJA":
-                self.game.setTebakan(1, tebakan)
-                self.game.set_kesiapan_akhir(1, True)
-                self.game.set_ranjau_siap(1, False)
+                self.newRoom.setTebakan(1, tebakan)
+                self.newRoom.set_kesiapan_akhir(1, True)
+                self.newRoom.set_ranjau_siap(1, False)
             else:
-                self.game.setTebakan(2, tebakan)
-                self.game.set_kesiapan_akhir(2, True)
-                self.game.set_ranjau_siap(2, False)
+                self.newRoom.setTebakan(2, tebakan)
+                self.newRoom.set_kesiapan_akhir(2, True)
+                self.newRoom.set_ranjau_siap(2, False)
             self.sendLine("TEBAKAN_DITAMPUNG")
             return
         self.sendLine(pesan)

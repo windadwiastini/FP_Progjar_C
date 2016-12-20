@@ -22,12 +22,15 @@ class ClientConnect(LineReceiver):
         if state == "PASANG":
             ladangku = self.view.gameLoop(skor_p1, skor_p2, ladang, True)
             paket_ladangku = json.dumps(ladangku)
-            self.sendLine(paket_ladangku)
+            self.sendLine("RANJAUKU // "+paket_ladangku)
             self.view.loadingScreen()
         elif state == "TEBAK":
             tebakan = self.view.gameLoop(skor_p1, skor_p2, ladang, False)
+            print "tebakan: ", tebakan
             paket_tebakan = json.dumps(tebakan)
-            self.sendLine(paket_tebakan)
+            # print paket_tebakan
+            self.sendLine("TEBAKANKU // "+paket_tebakan)
+            self.view.loadingScreen()
 
     def waiting(self):
         self.state = "WAITING"
@@ -46,7 +49,8 @@ class ClientConnect(LineReceiver):
 
     def tungguLawan(self, pesan):
         time.sleep(1)
-        self.sendLine(pesan)
+        msg = self.sendLine(pesan)
+        print msg
 
     def dataReceived(self, data):
         print "Server: ", data
@@ -77,12 +81,26 @@ class ClientConnect(LineReceiver):
             self.state = "PLAY"
             self.sendLine("IM_READY")
             # self.view.connect_room()
+        elif "GAME_OVER" in data:
+            skor = data.split(' // ')[0]
+            skor_p1 = skor.split(' vs ')[0]
+            skor_p2 = skor.split(' vs ')[1]
+            if self.role=="RAJA":
+                if skor_p1 >= skor_p2:
+                    self.view.youWin()
+                else:
+                    self.view.youLose()
+            else:
+                if skor_p2 >= skor_p1:
+                    self.view.youWin()
+                else:
+                    self.view.youLose()
         else:
             if self.state == "PLAY":
-                if data == "RANJAU_TERPASANG\r\n" or data == "MUSUH_BELUM_SIAP":
-                    self.tunguLawan("APAKAH_PLAYER_LAIN_SIAP")
-                elif data == "TEBAKAN_DITAMPUNG\r\n" or data == "MUSUH_BELUM_SELESAI":
-                    self.tunguLawan("APAKAH_PLAYER_LAIN_SELESAI")
+                if "RANJAU_TERPASANG" in data or "MUSUH_BELUM_SIAP" in data:
+                    self.tungguLawan("APAKAH_PLAYER_LAIN_SIAP")
+                elif "TEBAKAN_DITAMPUNG" in data or "MUSUH_BELUM_SELESAI" in data:
+                    self.tungguLawan("APAKAH_PLAYER_LAIN_SELESAI")
                 else:
                     print data
                     skor = data.split(' // ')[0]
