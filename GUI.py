@@ -47,6 +47,7 @@ class GUI:
         self.score2 = 0
         self.jumlahPasangTebak=0
         self.i=0
+        self.indexTebakan=[]
 
         # self.client = client
 
@@ -78,7 +79,7 @@ class GUI:
             tileSizeI = i * self.blockSize
             for j in range(4):
                 tileSizeJ = j * self.blockSize
-                if self.arrayDataPasang[index] == 1:
+                if self.arrayDataPilih[index] == 1:
                     pygame.draw.rect(self.gameDisplay, self.black,[tileSizeI + self.borderSize, tileSizeJ + self.borderSize, self.kotakIsi,self.kotakIsi])
                 else:
                     pygame.draw.rect(self.gameDisplay, self.red, [tileSizeI, tileSizeJ, self.blockSize, self.blockSize], self.borderSize)
@@ -92,7 +93,7 @@ class GUI:
             # pygame.draw.rect(self.gameDisplay,self.black,(x+self.borderSize,y+self.borderSize,self.kotakIsi,self.kotakIsi))
             if click[0] == 1:
                 self.clicked(x, y, key)
-                print
+
 
 
         # else :
@@ -102,18 +103,25 @@ class GUI:
         #         self.turn=True
 
     def clicked(self,x,y,key):
-        if self.arrayDataPasang[key]==0:
-            if self.turn:
-                self.arrayDataPilih = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+        if self.turn:
+            if self.arrayDataPasang[key] == 0:
+                # self.arrayDataPilih = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
                 self.arrayDataPasang[key]=1
                 print self.arrayDataPasang
                 # pygame.draw.rect(self.gameDisplay, self.black,(x + self.borderSize, y + self.borderSize, self.kotakIsi, self.kotakIsi))
                 self.jumlahPasangTebak += 1
             else :
+                pass
+
+        elif not self.turn :
+            if self.arrayDataPilih[key] == 0 :
                 self.arrayDataPilih[key]=1
+                print self.arrayDataPilih
                 # pygame.draw.rect(self.gameDisplay, self.black,(x + self.borderSize, y + self.borderSize, self.kotakIsi, self.kotakIsi))
-        else :
-            pass
+                self.jumlahPasangTebak+=1
+            else :
+                pass
 
 
 
@@ -332,6 +340,7 @@ class GUI:
         self.score1=skor1
         self.score2=skor2
         self.arrayPasangData = ladang
+        self.arrayDataPilih = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.turn = myTurn
         gameExit = False
         gameOver = False
@@ -361,8 +370,12 @@ class GUI:
             else :
                 self.arenaPilih()
                 self.showText("Memilih Lubang",self.green,675)
+                for i in range(len(self.arrayDataPilih)):
+                    if self.arrayDataPilih[i]==1:
+                        if i not in self.indexTebakan:
+                            self.indexTebakan.append(i)
                 if self.jumlahPasangTebak>=4:
-                    return self.arrayDataPilih
+                    return self.indexTebakan
 
 
             koor_x = [seq[0] for seq in self.arrayPasang]
@@ -400,5 +413,5 @@ class GUI:
         self.showText("YOU WIN",self.black,self.displayHeight/2,"large")
 
 
-ingame = GUI()
-ingame.gameLoop(1,2,3,True)
+# ingame = GUI()
+# ingame.gameLoop(1,2,3,True)
